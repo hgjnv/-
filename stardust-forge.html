@@ -1,0 +1,1746 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#05060f">
+<title>星尘熔炉 · 挂机放置游戏</title>
+<style>
+:root{
+  --bg:#05060f;
+  --panel:rgba(18,22,42,.72);
+  --panel2:rgba(28,33,60,.55);
+  --line:rgba(124,140,255,.18);
+  --line2:rgba(124,140,255,.38);
+  --text:#e8ecff;
+  --muted:#8b95c9;
+  --accent:#7c5cff;
+  --accent2:#38e1ff;
+  --gold:#ffcb6b;
+  --green:#4ade80;
+  --red:#ff6b81;
+  --r:14px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  min-height:100%;
+  font-family:"Segoe UI Variable","Segoe UI",system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+  background:var(--bg);color:var(--text);
+  overflow-x:hidden;-webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color:transparent;
+}
+button{font-family:inherit}
+b{font-weight:700}
+
+/* ---------- 星空背景 ---------- */
+.sky{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;
+  background:
+    radial-gradient(1200px 800px at 12% 6%, rgba(52,42,120,.55) 0%, rgba(0,0,0,0) 62%),
+    radial-gradient(1000px 700px at 88% 14%, rgba(96,26,110,.45) 0%, rgba(0,0,0,0) 60%),
+    radial-gradient(1100px 900px at 50% 112%, rgba(12,72,110,.5) 0%, rgba(0,0,0,0) 62%),
+    #05060f;
+}
+.stars{position:absolute;left:-50%;top:-50%;width:200%;height:200%;opacity:.75}
+.s1{background-image:
+  radial-gradient(1.6px 1.6px at 40px 60px,#fff,transparent),
+  radial-gradient(1.2px 1.2px at 160px 130px,#cfe0ff,transparent),
+  radial-gradient(1px 1px at 260px 40px,#fff,transparent),
+  radial-gradient(1.4px 1.4px at 90px 220px,#ffe8c0,transparent);
+  background-size:320px 320px;animation:drift 300s linear infinite}
+.s2{background-image:
+  radial-gradient(1px 1px at 20px 90px,#fff,transparent),
+  radial-gradient(1px 1px at 200px 20px,#a9c8ff,transparent),
+  radial-gradient(1px 1px at 120px 180px,#fff,transparent);
+  background-size:180px 180px;opacity:.5;animation:drift 200s linear infinite reverse}
+.s3{background-image:
+  radial-gradient(2px 2px at 300px 300px,#9ad9ff,transparent),
+  radial-gradient(2px 2px at 700px 120px,#fff,transparent);
+  background-size:900px 900px;opacity:.35;animation:twinkle 6s ease-in-out infinite}
+@keyframes drift{from{transform:translate3d(0,0,0)}to{transform:translate3d(-320px,-320px,0)}}
+@keyframes twinkle{0%,100%{opacity:.18}50%{opacity:.5}}
+
+/* ---------- 顶栏 ---------- */
+.topbar{
+  position:sticky;top:0;z-index:20;
+  display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;
+  padding:10px 18px;
+  background:linear-gradient(180deg,rgba(6,8,20,.92),rgba(6,8,20,.72));
+  border-bottom:1px solid var(--line);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+}
+.brand{display:flex;align-items:center;gap:11px;min-width:0}
+.logo{
+  width:40px;height:40px;flex:0 0 40px;border-radius:12px;display:grid;place-items:center;font-size:20px;
+  background:linear-gradient(140deg,#8b5cf6,#22d3ee);color:#0b0b18;
+  box-shadow:0 0 26px -4px rgba(124,92,255,.9);
+}
+.brand h1{margin:0;font-size:17px;letter-spacing:.5px}
+.brand p{margin:1px 0 0;font-size:11px;color:var(--muted);letter-spacing:.6px}
+.res{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.res-main{display:flex;align-items:baseline;gap:8px}
+.res-main .label{font-size:11px;color:var(--muted);letter-spacing:2px}
+#stardust{font-size:24px;font-weight:800;letter-spacing:.5px;
+  background:linear-gradient(92deg,#fff,#b9d5ff 45%,#8be9ff);-webkit-background-clip:text;background-clip:text;color:transparent;
+  text-shadow:0 0 26px rgba(56,225,255,.25)}
+.res-sub{font-size:12px;color:var(--muted)}
+.res-sub b{color:#cdd8ff}
+.star-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;
+  border:1px solid rgba(255,203,107,.35);background:rgba(255,203,107,.09);color:var(--gold);font-size:12px;font-weight:700}
+#saveTip{font-size:11px;color:var(--green);opacity:0;transition:opacity .35s}
+
+/* ---------- 布局 ---------- */
+.layout{
+  position:relative;z-index:1;max-width:1280px;margin:0 auto;padding:16px 16px 48px;
+  display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:16px;align-items:start;
+}
+@media (max-width:1000px){ .layout{grid-template-columns:1fr} }
+.col{display:flex;flex-direction:column;gap:16px;min-width:0}
+.panel{
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+  padding:14px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  box-shadow:0 18px 40px -30px rgba(0,0,0,.9);
+}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:11px;flex-wrap:wrap}
+.panel-head h2{margin:0;font-size:13px;letter-spacing:3px;color:#c3cdf7;font-weight:700}
+.muted{color:var(--muted);font-size:12px}
+.hidden{display:none !important}
+
+/* ---------- 点击区 ---------- */
+.click-panel{display:flex;flex-direction:column;align-items:center;gap:14px;padding:20px 14px}
+.click-wrap{position:relative;display:grid;place-items:center}
+.click-btn{
+  position:relative;width:216px;height:216px;border-radius:50%;border:1px solid rgba(255,255,255,.14);
+  cursor:pointer;color:#fff;
+  background:
+    radial-gradient(circle at 34% 28%, #b9a6ff 0%, #7c5cff 38%, #4c1d95 72%, #200a45 100%);
+  box-shadow:
+    inset 0 0 40px rgba(255,255,255,.18),
+    0 20px 60px -18px rgba(124,92,255,.95),
+    0 0 120px -34px rgba(56,225,255,.9);
+  transition:transform .07s ease, filter .18s ease;
+  display:grid;place-items:center;overflow:hidden;
+  animation:breathe 4.5s ease-in-out infinite;
+}
+.click-btn:active{transform:scale(.94);filter:brightness(1.2)}
+.click-btn .core{font-size:54px;line-height:1;filter:drop-shadow(0 0 14px rgba(255,255,255,.95));pointer-events:none}
+.click-btn .hint{position:absolute;bottom:34px;left:0;right:0;font-size:12px;letter-spacing:1px;color:rgba(255,255,255,.82);pointer-events:none}
+.click-btn .hint b{display:block;font-size:16px;color:#fff;margin-top:2px}
+@keyframes breathe{0%,100%{box-shadow:inset 0 0 40px rgba(255,255,255,.18),0 20px 60px -18px rgba(124,92,255,.95),0 0 120px -34px rgba(56,225,255,.9)}
+  50%{box-shadow:inset 0 0 52px rgba(255,255,255,.26),0 22px 70px -16px rgba(124,92,255,1),0 0 150px -20px rgba(56,225,255,1)}}
+.pulse{position:absolute;width:216px;height:216px;border-radius:50%;border:1px solid rgba(160,140,255,.5);
+  animation:pulse 2.6s ease-out infinite;pointer-events:none}
+@keyframes pulse{0%{transform:scale(1);opacity:.75}100%{transform:scale(1.55);opacity:0}}
+.click-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:100%}
+.click-stats > div{
+  background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 11px;
+  display:flex;align-items:center;justify-content:space-between;gap:8px}
+.click-stats span{font-size:11px;color:var(--muted)}
+.click-stats b{font-size:14px;color:#dbe4ff}
+.frenzy{
+  width:100%;text-align:center;padding:9px 12px;border-radius:10px;font-size:13px;font-weight:700;color:#0a0a14;
+  background:linear-gradient(92deg,#ffd76b,#ff9d5c);
+  box-shadow:0 0 40px -8px rgba(255,190,90,.85);
+  animation:frenzypulse 1s ease-in-out infinite}
+@keyframes frenzypulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.18)}}
+
+/* ---------- 购买模式 ---------- */
+.buymodes{display:flex;gap:4px;background:rgba(10,13,28,.7);padding:3px;border-radius:10px;border:1px solid var(--line)}
+.buymodes button{
+  border:0;background:transparent;color:var(--muted);font-size:12px;font-weight:700;
+  padding:5px 11px;border-radius:8px;cursor:pointer;transition:.15s}
+.buymodes button:hover{color:#dfe6ff}
+.buymodes button.on{background:linear-gradient(140deg,#7c5cff,#5b8cff);color:#fff;box-shadow:0 6px 18px -8px rgba(124,92,255,1)}
+
+/* ---------- 生成器 ---------- */
+.list{display:flex;flex-direction:column;gap:9px}
+.gen{
+  display:grid;grid-template-columns:46px minmax(0,1fr) auto;gap:11px;align-items:center;
+  padding:10px;border-radius:12px;border:1px solid var(--line);
+  background:linear-gradient(180deg,rgba(34,40,72,.5),rgba(16,20,40,.5));
+  transition:border-color .2s, transform .12s, opacity .2s}
+.gen:hover{border-color:var(--line2)}
+.gen.locked{display:none}
+.gen.ready{border-color:rgba(90,220,180,.45);box-shadow:0 0 0 1px rgba(90,220,180,.12) inset}
+.gen-icon{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;font-size:22px;
+  background:radial-gradient(circle at 32% 28%,rgba(255,255,255,.16),rgba(124,92,255,.16));
+  border:1px solid var(--line)}
+.gen-title{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.gen-name{font-size:14px;font-weight:700}
+.gen-owned{font-size:12px;color:var(--accent2);font-weight:700}
+.gen-desc{font-size:11px;color:var(--muted);margin-top:3px}
+.gen-rate{font-size:11px;color:#9fb0e8;margin-top:2px}
+.gen-rate b{color:#cfe0ff}
+.gen-bar{height:4px;border-radius:4px;background:rgba(255,255,255,.07);overflow:hidden;margin-top:7px}
+.gen-bar i{display:block;height:100%;width:0;border-radius:4px;
+  background:linear-gradient(90deg,#4ade80,#38e1ff);transition:width .2s ease}
+.buy-btn{
+  border:1px solid var(--line2);border-radius:11px;cursor:pointer;color:#fff;
+  background:linear-gradient(160deg,rgba(124,92,255,.32),rgba(56,225,255,.16));
+  padding:8px 12px;min-width:104px;text-align:center;transition:.14s}
+.buy-btn:hover{background:linear-gradient(160deg,rgba(124,92,255,.5),rgba(56,225,255,.28));transform:translateY(-1px)}
+.buy-btn:disabled{opacity:.42;cursor:not-allowed;transform:none;
+  background:rgba(255,255,255,.05);border-color:var(--line)}
+.buy-btn .bl{display:block;font-size:11px;letter-spacing:1px;color:#cdd6ff}
+.buy-btn .bc{display:block;font-size:13px;font-weight:800;margin-top:2px;color:var(--gold)}
+.buy-btn:disabled .bc{color:var(--red)}
+
+/* ---------- 标签页 ---------- */
+.tabs{display:flex;gap:5px;background:rgba(10,13,28,.66);border:1px solid var(--line);border-radius:12px;padding:4px;position:sticky;top:66px;z-index:10}
+.tabs button{
+  flex:1;border:0;background:transparent;color:var(--muted);font-size:12.5px;font-weight:700;
+  padding:9px 4px;border-radius:9px;cursor:pointer;transition:.16s;letter-spacing:.5px}
+.tabs button:hover{color:#e2e8ff;background:rgba(124,92,255,.12)}
+.tabs button.on{background:linear-gradient(140deg,#7c5cff,#5b8cff);color:#fff;box-shadow:0 8px 22px -10px rgba(124,92,255,1)}
+.pane{display:none}
+.pane.on{display:block;animation:fadeUp .25s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ---------- 升级卡 ---------- */
+.upgrades{display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));gap:9px}
+.upg{
+  text-align:left;border:1px solid var(--line);border-radius:12px;cursor:pointer;padding:10px;
+  background:linear-gradient(180deg,rgba(40,46,84,.5),rgba(16,20,40,.55));color:var(--text);
+  transition:.15s;position:relative;overflow:hidden}
+.upg:hover{transform:translateY(-2px);border-color:var(--line2)}
+.upg .un{font-size:12.5px;font-weight:700;display:block}
+.upg .ud{font-size:11px;color:var(--muted);margin-top:4px;display:block;line-height:1.35}
+.upg .uc{font-size:12px;font-weight:800;color:var(--gold);margin-top:7px;display:block}
+.upg.ok{border-color:rgba(74,222,128,.5);box-shadow:0 0 0 1px rgba(74,222,128,.12) inset}
+.upg.no .uc{color:var(--red)}
+.upg::after{content:"";position:absolute;inset:0;background:linear-gradient(120deg,transparent 40%,rgba(255,255,255,.08) 50%,transparent 60%);
+  transform:translateX(-120%);transition:transform .5s}
+.upg:hover::after{transform:translateX(120%)}
+.empty{color:var(--muted);font-size:12.5px;padding:14px;text-align:center;border:1px dashed var(--line);border-radius:12px}
+
+/* ---------- 转生 ---------- */
+.prestige-top{display:flex;gap:13px;align-items:center;padding:13px;border-radius:12px;
+  border:1px solid rgba(255,203,107,.25);background:linear-gradient(140deg,rgba(255,203,107,.09),rgba(124,92,255,.09))}
+.prestige-top .bigstar{font-size:34px;color:var(--gold);filter:drop-shadow(0 0 14px rgba(255,203,107,.8))}
+.prestige-top .pv{font-size:19px;font-weight:800;color:var(--gold)}
+.prestige-top p{margin:5px 0 0;font-size:11.5px;color:var(--muted);line-height:1.5}
+.btn{
+  border:1px solid var(--line2);border-radius:11px;cursor:pointer;color:#fff;font-weight:700;
+  background:linear-gradient(150deg,rgba(124,92,255,.4),rgba(56,225,255,.2));padding:10px 14px;transition:.15s;font-size:13px}
+.btn:hover{transform:translateY(-1px);border-color:var(--line2);filter:brightness(1.1)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none;filter:none}
+.btn.gold{background:linear-gradient(150deg,#ffcb6b,#ff9d5c);color:#1a1206;border-color:rgba(255,203,107,.6)}
+.btn.ghost{background:rgba(255,255,255,.05)}
+.btn.danger{background:linear-gradient(150deg,#ff5c7a,#c0264a);border-color:rgba(255,107,129,.6)}
+.btn.wide{width:100%;margin-top:11px}
+.pup{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;
+  padding:10px;border-radius:12px;border:1px solid var(--line);background:rgba(16,20,40,.5);margin-top:9px}
+.pup .pn{font-size:13px;font-weight:700}
+.pup .pl{font-size:11px;color:var(--accent2);margin-left:6px}
+.pup .pd{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.4}
+.pup .pb{border:1px solid rgba(255,203,107,.4);background:rgba(255,203,107,.12);color:var(--gold);
+  border-radius:10px;padding:8px 12px;font-weight:800;font-size:12px;cursor:pointer;white-space:nowrap;min-width:88px}
+.pup .pb:disabled{opacity:.4;cursor:not-allowed}
+.pup.maxed{opacity:.72}
+.pup.maxed .pb{background:rgba(74,222,128,.12);border-color:rgba(74,222,128,.4);color:var(--green)}
+
+/* ---------- 成就 ---------- */
+.achs{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:9px}
+.ach{padding:10px;border-radius:12px;border:1px solid var(--line);background:rgba(16,20,40,.5);opacity:.48;transition:.2s}
+.ach .an{font-size:12.5px;font-weight:700}
+.ach .ad{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.35}
+.ach.got{opacity:1;border-color:rgba(255,203,107,.4);background:linear-gradient(150deg,rgba(255,203,107,.12),rgba(124,92,255,.1))}
+.ach.got .an::before{content:"★ ";color:var(--gold)}
+
+/* ---------- 统计 / 设置 ---------- */
+.kv{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}
+.kv > div{display:flex;justify-content:space-between;gap:8px;padding:9px 11px;border-radius:10px;
+  background:var(--panel2);border:1px solid var(--line);font-size:12px}
+.kv span{color:var(--muted)}
+.kv b{color:#dbe4ff}
+.setrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px;border-radius:12px;
+  border:1px solid var(--line);background:rgba(16,20,40,.5);margin-bottom:9px;flex-wrap:wrap}
+.setrow .sd{font-size:11.5px;color:var(--muted);margin-top:3px;max-width:420px;line-height:1.45}
+.switch{position:relative;width:48px;height:26px;flex:0 0 48px;border-radius:999px;border:1px solid var(--line2);
+  background:rgba(255,255,255,.07);cursor:pointer;transition:.2s}
+.switch i{position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#9aa6d8;transition:.2s}
+.switch.on{background:linear-gradient(140deg,#4ade80,#22d3ee);border-color:transparent}
+.switch.on i{left:24px;background:#06121a}
+.switch.dis{opacity:.4;cursor:not-allowed}
+textarea{width:100%;min-height:92px;border-radius:10px;border:1px solid var(--line);background:rgba(6,9,20,.8);
+  color:#cfd8ff;font-family:ui-monospace,Consolas,monospace;font-size:11px;padding:9px;resize:vertical}
+
+/* ---------- 飘字 / 流星 / 提示 ---------- */
+.floater{position:fixed;z-index:60;pointer-events:none;font-weight:800;font-size:15px;color:#fff;
+  text-shadow:0 0 12px rgba(124,92,255,.9),0 2px 6px rgba(0,0,0,.7)}
+.floater.gold{color:var(--gold);text-shadow:0 0 14px rgba(255,200,90,.9)}
+.meteor{position:fixed;z-index:50;width:56px;height:56px;border:0;background:transparent;cursor:pointer;
+  font-size:32px;line-height:56px;text-align:center;filter:drop-shadow(0 0 16px rgba(255,200,120,.95));
+  animation:meteorspin 1.6s linear infinite}
+.meteor:hover{transform:scale(1.15)}
+@keyframes meteorspin{from{rotate:0deg}to{rotate:360deg}}
+#toasts{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:80;display:flex;flex-direction:column;
+  gap:8px;align-items:center;pointer-events:none;width:min(92vw,460px)}
+.toast{background:rgba(14,18,38,.95);border:1px solid var(--line2);color:#e6ebff;font-size:12.5px;
+  padding:10px 15px;border-radius:11px;box-shadow:0 16px 40px -18px #000;animation:toastIn .3s ease}
+@keyframes toastIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+/* ---------- 弹窗 ---------- */
+.modal-bg{position:fixed;inset:0;z-index:90;background:rgba(3,4,10,.72);backdrop-filter:blur(6px);
+  display:grid;place-items:center;padding:18px}
+.modal{width:min(94vw,470px);background:linear-gradient(180deg,rgba(24,29,54,.98),rgba(12,15,32,.98));
+  border:1px solid var(--line2);border-radius:16px;padding:20px;box-shadow:0 30px 80px -30px #000}
+.modal h3{margin:0 0 10px;font-size:16px}
+.modal .mb{font-size:13px;color:#c8d2f5;line-height:1.6}
+.modal .ma{display:flex;gap:9px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap}
+footer.foot{position:relative;z-index:1;text-align:center;color:var(--muted);font-size:11px;padding:0 16px 26px;line-height:1.7}
+</style>
+</head>
+<body>
+
+<div class="sky"><div class="stars s1"></div><div class="stars s2"></div><div class="stars s3"></div></div>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="logo">✦</div>
+    <div>
+      <h1>星尘熔炉</h1>
+      <p>STARDUST FORGE · 挂机放置</p>
+    </div>
+  </div>
+  <div class="res">
+    <div class="res-main">
+      <span class="label">星尘</span>
+      <span id="stardust">0</span>
+    </div>
+    <div class="res-sub"><b id="spsTop">0</b> / 秒</div>
+    <div class="star-chip">★ <b id="starsTop">0</b></div>
+    <div id="saveTip">已保存</div>
+  </div>
+</header>
+
+<main class="layout">
+  <div class="col">
+    <section class="panel click-panel">
+      <div class="click-wrap">
+        <div class="pulse"></div>
+        <button id="clickBtn" class="click-btn" title="汲取星尘（空格键）">
+          <span class="core">✦</span>
+          <span class="hint">汲取星尘<b id="clickValue">+1</b></span>
+        </button>
+      </div>
+      <div id="frenzy" class="frenzy hidden">☄️ 流星狂热 ×7 · 剩余 <span id="frenzyTime">0.0</span> 秒</div>
+      <div class="click-stats">
+        <div><span>点击收益</span><b id="clickValue2">1</b></div>
+        <div><span>每秒产量</span><b id="sps">0</b></div>
+        <div><span>本轮收入</span><b id="runEarned">0</b></div>
+        <div><span>累计收入</span><b id="totalEarned">0</b></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>生 产 线</h2>
+        <div class="buymodes" id="buymodes">
+          <button data-mode="1" class="on">×1</button>
+          <button data-mode="10">×10</button>
+          <button data-mode="100">×100</button>
+          <button data-mode="max">最大</button>
+        </div>
+      </div>
+      <div id="genList" class="list"></div>
+    </section>
+  </div>
+
+  <div class="col">
+    <nav class="tabs" id="tabs">
+      <button data-tab="upg" class="on">升级</button>
+      <button data-tab="prestige">转生</button>
+      <button data-tab="ach">成就</button>
+      <button data-tab="stats">统计</button>
+      <button data-tab="set">设置</button>
+    </nav>
+
+    <section class="panel pane on" id="pane-upg">
+      <div class="panel-head">
+        <h2>升 级</h2>
+        <span class="muted" id="upgCount">已购 0</span>
+      </div>
+      <div id="upgList" class="upgrades"></div>
+      <div id="upgEmpty" class="empty">暂时没有可购买的升级，继续扩大生产吧。</div>
+    </section>
+
+    <section class="panel pane" id="pane-prestige">
+      <div class="panel-head"><h2>转 生 · 星 核</h2></div>
+      <div class="prestige-top">
+        <div class="bigstar">★</div>
+        <div>
+          <div class="pv">可获得 <span id="pGain">0</span> 星核</div>
+          <p>转生会重置星尘、生产线与全部普通升级，但保留星核、成就与星核商店。<br>每枚星核提供 <b>+2%</b> 全局产量，星核越多，下一轮越快。</p>
+        </div>
+      </div>
+      <button id="prestigeBtn" class="btn gold wide" disabled>需要本轮收入 1B 才能转生</button>
+      <div id="pupList" style="margin-top:6px"></div>
+    </section>
+
+    <section class="panel pane" id="pane-ach">
+      <div class="panel-head">
+        <h2>成 就</h2>
+        <span class="muted" id="achCount">0 / 0</span>
+      </div>
+      <div class="muted" style="margin-bottom:10px;font-size:11.5px">每解锁一个成就，全局产量永久 +1%。</div>
+      <div id="achList" class="achs"></div>
+    </section>
+
+    <section class="panel pane" id="pane-stats">
+      <div class="panel-head"><h2>统 计</h2></div>
+      <div id="statList" class="kv"></div>
+    </section>
+
+    <section class="panel pane" id="pane-set">
+      <div class="panel-head"><h2>设 置</h2></div>
+
+      <div class="setrow">
+        <div>
+          <div><b>自动购买</b></div>
+          <div class="sd">自动购买当前买得起的生产线（每次 1 个）。需要在星核商店解锁「自动机」。</div>
+        </div>
+        <div class="switch" id="swAuto"><i></i></div>
+      </div>
+
+      <div class="setrow">
+        <div>
+          <div><b>数字格式</b></div>
+          <div class="sd">在「1.23Qa」与「1.23e15」之间切换。</div>
+        </div>
+        <div class="switch" id="swSci"><i></i></div>
+      </div>
+
+      <div class="setrow">
+        <div>
+          <div><b>手动存档</b></div>
+          <div class="sd">游戏每 10 秒自动保存一次，关闭页面前也会保存。</div>
+        </div>
+        <button class="btn ghost" id="btnSave">立即保存</button>
+      </div>
+
+      <div class="setrow">
+        <div>
+          <div><b>存档导入 / 导出</b></div>
+          <div class="sd">导出的文本可以复制备份，或粘贴到另一台设备继续游戏。</div>
+        </div>
+        <button class="btn ghost" id="btnExport">导出存档</button>
+      </div>
+      <textarea id="ioBox" spellcheck="false" placeholder="导出后文本会出现在这里；粘贴存档文本后点击「导入」即可覆盖当前进度。"></textarea>
+      <div style="display:flex;gap:9px;margin-top:9px;flex-wrap:wrap">
+        <button class="btn" id="btnImport">导入存档</button>
+        <button class="btn danger" id="btnWipe">清除全部进度</button>
+      </div>
+
+      <div id="storageWarn" class="muted hidden" style="margin-top:12px;color:var(--red)"></div>
+    </section>
+  </div>
+</main>
+
+<footer class="foot">
+  空格键 = 汲取星尘 · 每 10 秒自动保存 · 关闭页面后熔炉仍会离线运转<br>
+  <span class="muted">小提示：偶有流星划过天际，点它可获得 7 倍产量狂热。</span>
+</footer>
+
+<div id="toasts"></div>
+<div id="modalRoot"></div>
+
+<noscript><p style="padding:24px;color:#fff">这个游戏需要启用 JavaScript 才能运行。</p></noscript>
+
+<script>
+(function () {
+'use strict';
+
+/* =========================================================
+   1. 基础工具
+   ========================================================= */
+var $ = function (sel, root) { return (root || document).querySelector(sel); };
+var clamp = function (v, a, b) { return v < a ? a : (v > b ? b : v); };
+
+var SUF = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc',
+           'UDc', 'DDc', 'TDc', 'QaD', 'QiD', 'SxD', 'SpD', 'OcD', 'NoD', 'Vg', 'Uvg'];
+
+var USE_SCI = false;
+
+function trimZero(s) {
+  if (s.indexOf('.') < 0) return s;
+  return s.replace(/\.?0+$/, '');
+}
+
+function fmt(n) {
+  if (typeof n !== 'number' || isNaN(n)) return '0';
+  if (n === Infinity) return '∞';
+  var neg = false;
+  if (n < 0) { neg = true; n = -n; }
+  var out;
+  if (n < 1000) {
+    if (n === 0) out = '0';
+    else if (n < 10) out = trimZero(n.toFixed(2));
+    else if (n < 100) out = trimZero(n.toFixed(1));
+    else out = String(Math.floor(n));
+  } else {
+    var t = Math.floor(Math.log10(n) / 3);
+    var s = n / Math.pow(1000, t);
+    if (s >= 999.5 && t + 1 < SUF.length) { t += 1; s = n / Math.pow(1000, t); }
+    if (USE_SCI || t >= SUF.length) {
+      out = n.toExponential(2).replace('e+', 'e');
+    } else {
+      out = trimZero(s.toFixed(s < 10 ? 2 : (s < 100 ? 1 : 0))) + SUF[t];
+    }
+  }
+  return neg ? '-' + out : out;
+}
+
+function fmtInt(n) {
+  if (n < 1000) return String(Math.floor(n));
+  return fmt(n);
+}
+
+function timeStr(sec) {
+  sec = Math.max(0, Math.floor(sec));
+  var d = Math.floor(sec / 86400);
+  var h = Math.floor((sec % 86400) / 3600);
+  var m = Math.floor((sec % 3600) / 60);
+  var s = sec % 60;
+  var out = '';
+  if (d > 0) out += d + '天 ';
+  if (d > 0 || h > 0) out += h + '小时 ';
+  if (d > 0 || h > 0 || m > 0) out += m + '分 ';
+  out += s + '秒';
+  return out;
+}
+
+/* 等比数列求和：从已有 owned 个开始，买 k 个的总价 */
+function geomCost(base, growth, owned, k) {
+  if (k <= 0) return 0;
+  return base * Math.pow(growth, owned) * (Math.pow(growth, k) - 1) / (growth - 1);
+}
+/* 当前金钱最多能买几个 */
+function maxAffordable(base, growth, owned, money) {
+  var c0 = base * Math.pow(growth, owned);
+  if (money < c0) return 0;
+  var k = Math.floor(Math.log(money * (growth - 1) / c0 + 1) / Math.log(growth));
+  if (!isFinite(k) || k < 0) k = 0;
+  var guard = 0;
+  while (k > 0 && geomCost(base, growth, owned, k) > money && guard++ < 80) k--;
+  guard = 0;
+  while (geomCost(base, growth, owned, k + 1) <= money && guard++ < 80) k++;
+  return k;
+}
+
+function toast(msg, ms) {
+  var box = $('#toasts');
+  if (!box) return;
+  var el = document.createElement('div');
+  el.className = 'toast';
+  el.innerHTML = msg;
+  box.appendChild(el);
+  setTimeout(function () {
+    el.style.transition = 'opacity .4s, transform .4s';
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(10px)';
+    setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 420);
+  }, ms || 2600);
+}
+
+function floatText(x, y, text, gold) {
+  var el = document.createElement('div');
+  el.className = 'floater' + (gold ? ' gold' : '');
+  el.textContent = text;
+  el.style.left = x + 'px';
+  el.style.top = y + 'px';
+  document.body.appendChild(el);
+  if (el.animate) {
+    var anim = el.animate(
+      [
+        { transform: 'translate(-50%,-50%) scale(.85)', opacity: 1 },
+        { transform: 'translate(-50%,-190%) scale(1.08)', opacity: 0 }
+      ],
+      { duration: 900, easing: 'cubic-bezier(.2,.7,.3,1)' }
+    );
+    anim.onfinish = function () { if (el.parentNode) el.parentNode.removeChild(el); };
+  } else {
+    setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 900);
+  }
+}
+
+/* 通用弹窗 */
+function openModal(title, bodyHTML, actions) {
+  var root = $('#modalRoot');
+  root.innerHTML = '';
+  var bg = document.createElement('div');
+  bg.className = 'modal-bg';
+  var box = document.createElement('div');
+  box.className = 'modal';
+  var h = document.createElement('h3');
+  h.textContent = title;
+  var b = document.createElement('div');
+  b.className = 'mb';
+  b.innerHTML = bodyHTML;
+  var a = document.createElement('div');
+  a.className = 'ma';
+  box.appendChild(h); box.appendChild(b); box.appendChild(a);
+  bg.appendChild(box);
+  root.appendChild(bg);
+  var list = actions || [{ label: '知道了', cls: 'btn', fn: null }];
+  list.forEach(function (act) {
+    var btn = document.createElement('button');
+    btn.className = act.cls || 'btn';
+    btn.textContent = act.label;
+    btn.onclick = function () {
+      bg.parentNode && bg.parentNode.removeChild(bg);
+      if (act.fn) act.fn();
+    };
+    a.appendChild(btn);
+  });
+}
+
+/* =========================================================
+   2. 游戏数据
+   ========================================================= */
+var GROWTH = 1.15;
+
+var GENS = [
+  { name: '尘埃收集器', icon: '🌫️', base: 10,     prod: 0.1,   desc: '从虚空中筛取星尘' },
+  { name: '引力熔炉',   icon: '🔥', base: 120,    prod: 1.2,   desc: '以引力压缩尘埃' },
+  { name: '星轨冶炼厂', icon: '⚙️', base: 1.4e3,  prod: 14,    desc: '沿星轨自动冶炼' },
+  { name: '潮汐发电机', icon: '🌊', base: 1.6e4,  prod: 160,   desc: '汲取双星潮汐之力' },
+  { name: '戴森环',     icon: '🛰️', base: 2e5,    prod: 1.9e3, desc: '包裹恒星收集能量' },
+  { name: '反物质锻炉', icon: '⚛️', base: 2.6e6,  prod: 2.3e4, desc: '湮灭物质换取星尘' },
+  { name: '中子星钻机', icon: '💫', base: 3.5e7,  prod: 2.8e5, desc: '钻取中子星核心' },
+  { name: '黑洞引擎',   icon: '🕳️', base: 5e8,    prod: 3.5e6, desc: '从事件视界榨取能量' },
+  { name: '时空织机',   icon: '🧵', base: 7.5e9,  prod: 4.5e7, desc: '编织时空获得星尘' },
+  { name: '奇点圣殿',   icon: '🌌', base: 1.2e11, prod: 6e8,   desc: '在奇点中重写物理' }
+];
+var NGEN = GENS.length;
+
+/* 每个生成器的四档强化升级 */
+var GEN_TIERS = [
+  { at: 10,  mult: 2, costMul: 12,     tag: '改良' },
+  { at: 25,  mult: 2, costMul: 120,    tag: '优化' },
+  { at: 50,  mult: 3, costMul: 1500,   tag: '超频' },
+  { at: 100, mult: 3, costMul: 400000, tag: '奇点化' }
+];
+
+/* 全局产量升级 */
+var GUPG = [
+  { id: 'x1',  name: '星尘共鸣',   mult: 1.5, cost: 5e3 },
+  { id: 'x2',  name: '引力透镜',   mult: 1.5, cost: 2e5 },
+  { id: 'x3',  name: '恒星熔炉',   mult: 2,   cost: 1e7 },
+  { id: 'x4',  name: '星云工厂',   mult: 2,   cost: 5e8 },
+  { id: 'x5',  name: '银河枢纽',   mult: 2.5, cost: 2e10 },
+  { id: 'x6',  name: '星系引擎',   mult: 2.5, cost: 1e12 },
+  { id: 'x7',  name: '宇宙弦',     mult: 3,   cost: 5e13 },
+  { id: 'x8',  name: '维度熔炉',   mult: 3,   cost: 2e15 },
+  { id: 'x9',  name: '时间之外',   mult: 4,   cost: 1e17 },
+  { id: 'x10', name: '星尘永恒',   mult: 5,   cost: 5e18 },
+  { id: 'x11', name: '奇点共鸣',   mult: 6,   cost: 2e20 },
+  { id: 'x12', name: '万有归一',   mult: 10,  cost: 1e22 }
+];
+
+/* 点击升级 */
+var CUPG = [
+  { id: 'c1', name: '星辰指环',   desc: '点击收益 ×2', cost: 100,  mult: 2, req: function (s) { return s.clicks >= 15; } },
+  { id: 'c2', name: '双星指环',   desc: '点击收益 ×2', cost: 2500, mult: 2, req: function (s) { return s.clicks >= 100; } },
+  { id: 'c3', name: '星尘手套',   desc: '点击收益 ×3', cost: 8e4,  mult: 3, req: function (s) { return s.clicks >= 300; } },
+  { id: 'c4', name: '引力指尖',   desc: '点击收益 ×3', cost: 2e6,  mult: 3, req: function (s) { return s.clicks >= 600; } },
+  { id: 'c5', name: '奇点之触',   desc: '点击收益 ×5', cost: 1e8,  mult: 5, req: function (s) { return s.clicks >= 1000; } },
+  { id: 'c6', name: '共鸣回路',   desc: '点击至少获得每秒产量的 0.5%', cost: 5e4,  frac: 0.005, req: function (s, d) { return d.sps >= 50; } },
+  { id: 'c7', name: '超导共鸣',   desc: '点击至少获得每秒产量的 2%',   cost: 5e7,  frac: 0.02,  req: function (s, d) { return d.sps >= 5e4; } },
+  { id: 'c8', name: '星核共鸣指', desc: '点击至少获得每秒产量的 6%',   cost: 5e10, frac: 0.06,  req: function (s, d) { return d.sps >= 1e7; } },
+  { id: 'c9', name: '奇点共鸣指', desc: '点击至少获得每秒产量的 15%',  cost: 5e14, frac: 0.15,  req: function (s, d) { return d.sps >= 1e10; } }
+];
+
+/* 生成器强化卡（程序生成） */
+var GENUPG = [];
+(function buildGenUpgrades() {
+  for (var i = 0; i < NGEN; i++) {
+    var arr = [];
+    for (var j = 0; j < GEN_TIERS.length; j++) {
+      (function (i, j) {
+        var t = GEN_TIERS[j];
+        var g = GENS[i];
+        arr.push({
+          id: 'gu' + i + '_' + j,
+          kind: 'gen',
+          gi: i,
+          name: g.name + ' · ' + t.tag,
+          desc: g.name + ' 产量 ×' + t.mult,
+          cost: g.base * t.costMul,
+          mult: t.mult,
+          req: function (s) { return s.gens[i] >= t.at; }
+        });
+      })(i, j);
+    }
+    GENUPG.push(arr);
+  }
+})();
+
+/* 星核商店 */
+var PUP = [
+  { id: 'p_global', name: '星核共鸣', max: 60, cost: function (l) { return Math.ceil(1 * Math.pow(1.35, l)); },
+    desc: function (l) { return '全局产量 +5%（当前 +' + (l * 5) + '%）'; } },
+  { id: 'p_time', name: '时间褶皱', max: 20, cost: function (l) { return Math.ceil(2 * Math.pow(1.5, l)); },
+    desc: function (l) { return '离线上限 +2 小时、离线效率 +3%（当前 ' + (3 + 2 * l) + ' 小时 / ' + Math.min(100, 50 + 3 * l) + '%）'; } },
+  { id: 'p_meteor', name: '流星引力', max: 10, cost: function (l) { return Math.ceil(4 * Math.pow(1.6, l)); },
+    desc: function (l) { return '流星出现更频繁，狂热持续时间 +2 秒（当前 ' + (20 + 2 * l) + ' 秒）'; } },
+  { id: 'p_hand', name: '星辰之手', max: 10, cost: function (l) { return Math.ceil(3 * Math.pow(1.8, l)); },
+    desc: function (l) { return '每秒自动汲取 ' + l + ' 次点击收益'; } },
+  { id: 'p_auto', name: '自动机', max: 1, cost: function (l) { return 5; },
+    desc: function (l) { return '解锁自动购买（在设置中开启）'; } }
+];
+
+/* 成就 */
+var ACHS = [
+  { id: 'a1',  name: '初次汲取',   desc: '点击 1 次',            chk: function (s) { return s.clicks >= 1; } },
+  { id: 'a2',  name: '手指发热',   desc: '点击 100 次',          chk: function (s) { return s.clicks >= 100; } },
+  { id: 'a3',  name: '指尖星尘',   desc: '点击 1,000 次',        chk: function (s) { return s.clicks >= 1000; } },
+  { id: 'a4',  name: '点击狂人',   desc: '点击 10,000 次',       chk: function (s) { return s.clicks >= 10000; } },
+  { id: 'a5',  name: '尘埃之主',   desc: '拥有 10 个尘埃收集器',  chk: function (s) { return s.gens[0] >= 10; } },
+  { id: 'a6',  name: '尘埃工厂',   desc: '拥有 100 个尘埃收集器', chk: function (s) { return s.gens[0] >= 100; } },
+  { id: 'a7',  name: '规模化',     desc: '任意生产线达到 50 个',  chk: function (s) { return s.gens.some(function (v) { return v >= 50; }); } },
+  { id: 'a8',  name: '星际舰队',   desc: '任意生产线达到 150 个', chk: function (s) { return s.gens.some(function (v) { return v >= 150; }); } },
+  { id: 'a9',  name: '全线启动',   desc: '解锁全部 10 种生产线',  chk: function (s) { return s.gens.every(function (v) { return v > 0; }); } },
+  { id: 'a10', name: '小有积蓄',   desc: '累计获得 1M 星尘',     chk: function (s) { return s.totalEarned >= 1e6; } },
+  { id: 'a11', name: '富甲一方',   desc: '累计获得 1B 星尘',     chk: function (s) { return s.totalEarned >= 1e9; } },
+  { id: 'a12', name: '星辰巨富',   desc: '累计获得 1T 星尘',     chk: function (s) { return s.totalEarned >= 1e12; } },
+  { id: 'a13', name: '宇宙财阀',   desc: '累计获得 1Qa 星尘',    chk: function (s) { return s.totalEarned >= 1e15; } },
+  { id: 'a14', name: '高速运转',   desc: '每秒产量达到 1K',      chk: function (s, d) { return d.sps >= 1e3; } },
+  { id: 'a15', name: '轰鸣熔炉',   desc: '每秒产量达到 1M',      chk: function (s, d) { return d.sps >= 1e6; } },
+  { id: 'a16', name: '恒星引擎',   desc: '每秒产量达到 1B',      chk: function (s, d) { return d.sps >= 1e9; } },
+  { id: 'a17', name: '第一次轮回', desc: '完成 1 次转生',        chk: function (s) { return s.prestiges >= 1; } },
+  { id: 'a18', name: '轮回十次',   desc: '完成 10 次转生',       chk: function (s) { return s.prestiges >= 10; } },
+  { id: 'a19', name: '星核收藏家', desc: '持有 100 枚星核',      chk: function (s) { return s.stars >= 100; } },
+  { id: 'a20', name: '流星猎人',   desc: '捕获 10 颗流星',       chk: function (s) { return s.meteors >= 10; } },
+  { id: 'a21', name: '挂机大师',   desc: '累计游戏 1 小时',      chk: function (s) { return s.playTime >= 3600; } },
+  { id: 'a22', name: '收藏家',     desc: '购买 25 项升级',       chk: function (s) { return Object.keys(s.upgrades).length >= 25; } }
+];
+
+/* =========================================================
+   3. 状态
+   ========================================================= */
+var SAVE_KEY = 'stardust-forge-save-v1';
+var storageOK = true;
+
+function defaultState() {
+  return {
+    v: 1,
+    stardust: 0,
+    totalEarned: 0,
+    runEarned: 0,
+    clicks: 0,
+    stars: 0,
+    totalStars: 0,
+    prestiges: 0,
+    meteors: 0,
+    gens: new Array(NGEN).fill(0),
+    upgrades: {},
+    achs: {},
+    pk: {},
+    playTime: 0,
+    frenzyUntil: 0,
+    buyMode: 1,
+    autoBuy: false,
+    sci: false,
+    lastTick: Date.now(),
+    lastSave: Date.now()
+  };
+}
+
+var state = defaultState();
+
+var derived = {
+  sps: 0,
+  globalMult: 1,
+  clickMult: 1,
+  clickValue: 1,
+  clickFraction: 0,
+  genMult: new Array(NGEN).fill(1),
+  achBonus: 1
+};
+
+function pk(id) { return state.pk[id] || 0; }
+
+function frenzyMult() {
+  return Date.now() < state.frenzyUntil ? 7 : 1;
+}
+
+function offlineCapSec() { return (3 + 2 * pk('p_time')) * 3600; }
+function offlineEff() { return Math.min(1, 0.5 + 0.03 * pk('p_time')); }
+
+/* 被动产出速率：生产线产量 + 星辰之手的自动汲取 */
+function passiveRate() {
+  return derived.sps + derived.clickValue * pk('p_hand');
+}
+
+/* 重新计算所有派生数值 */
+function recompute() {
+  var globalMult = 1;
+  globalMult *= 1 + 0.02 * state.stars;             /* 星核 */
+  globalMult *= 1 + 0.05 * pk('p_global');          /* 星核商店 */
+  var achCount = Object.keys(state.achs).length;
+  globalMult *= 1 + 0.01 * achCount;                /* 成就 */
+  for (var i = 0; i < GUPG.length; i++) {
+    if (state.upgrades[GUPG[i].id]) globalMult *= GUPG[i].mult;
+  }
+
+  var genMult = new Array(NGEN);
+  for (var g = 0; g < NGEN; g++) {
+    var m = 1;
+    var arr = GENUPG[g];
+    for (var k = 0; k < arr.length; k++) {
+      if (state.upgrades[arr[k].id]) m *= arr[k].mult;
+    }
+    genMult[g] = m;
+  }
+
+  var clickMult = 1;
+  var clickFraction = 0;
+  for (var c = 0; c < CUPG.length; c++) {
+    var u = CUPG[c];
+    if (!state.upgrades[u.id]) continue;
+    if (u.mult) clickMult *= u.mult;
+    if (u.frac && u.frac > clickFraction) clickFraction = u.frac;
+  }
+
+  var fm = frenzyMult();
+  var sps = 0;
+  for (var q = 0; q < NGEN; q++) sps += state.gens[q] * GENS[q].prod * genMult[q];
+  sps *= globalMult * fm;
+
+  derived.sps = sps;
+  derived.globalMult = globalMult;
+  derived.genMult = genMult;
+  derived.clickMult = clickMult;
+  derived.clickFraction = clickFraction;
+  derived.achBonus = 1 + 0.01 * achCount;
+  derived.clickValue = Math.max(clickMult * globalMult, sps * clickFraction) * fm;
+}
+
+function addStardust(v) {
+  if (!(v > 0)) return;
+  state.stardust += v;
+  state.totalEarned += v;
+  state.runEarned += v;
+}
+
+/* =========================================================
+   4. 购买逻辑
+   ========================================================= */
+function planBuy(gi) {
+  var g = GENS[gi];
+  var owned = state.gens[gi];
+  var unit = g.base * Math.pow(GROWTH, owned);
+  var maxK = maxAffordable(g.base, GROWTH, owned, state.stardust);
+  var want = state.buyMode === 'max' ? maxK : Math.min(state.buyMode, maxK);
+  if (want < 0) want = 0;
+  var cost = want > 0 ? geomCost(g.base, GROWTH, owned, want) : unit;
+  return { k: want, cost: cost, unit: unit, max: maxK };
+}
+
+function buyGen(gi) {
+  var plan = planBuy(gi);
+  if (plan.k <= 0) { return false; }
+  if (state.stardust < plan.cost - 1e-6) { return false; }
+  state.stardust -= plan.cost;
+  state.gens[gi] += plan.k;
+  recompute();
+  return plan.k;
+}
+
+function buyUpgrade(id) {
+  var u = findUpgrade(id);
+  if (!u || state.upgrades[id]) return false;
+  if (state.stardust < u.cost - 1e-6) return false;
+  state.stardust -= u.cost;
+  state.upgrades[id] = 1;
+  recompute();
+  return true;
+}
+
+var UPGRADE_MAP = null;
+function allUpgrades() {
+  if (UPGRADE_MAP) return UPGRADE_MAP;
+  var list = [];
+  var i, j;
+  for (i = 0; i < NGEN; i++) for (j = 0; j < GENUPG[i].length; j++) list.push(GENUPG[i][j]);
+  for (i = 0; i < GUPG.length; i++) {
+    (function (g) {
+      list.push({
+        id: g.id, kind: 'global', name: g.name,
+        desc: '全局产量 ×' + g.mult,
+        cost: g.cost, mult: g.mult,
+        req: function (s) { return s.runEarned >= g.cost * 0.4; }
+      });
+    })(GUPG[i]);
+  }
+  for (i = 0; i < CUPG.length; i++) {
+    var c = CUPG[i];
+    list.push({
+      id: c.id, kind: 'click', name: c.name, desc: c.desc,
+      cost: c.cost, mult: c.mult || 0, frac: c.frac || 0,
+      req: (function (c) { return function (s, d) { return c.req(s, d); }; })(c)
+    });
+  }
+  UPGRADE_MAP = list;
+  return list;
+}
+
+function findUpgrade(id) {
+  var list = allUpgrades();
+  for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
+  return null;
+}
+
+/* 已解锁且未购买 */
+function visibleUpgrades() {
+  var list = allUpgrades();
+  var out = [];
+  for (var i = 0; i < list.length; i++) {
+    var u = list[i];
+    if (state.upgrades[u.id]) continue;
+    var ok = false;
+    try { ok = !!u.req(state, derived); } catch (e) { ok = false; }
+    if (ok) out.push(u);
+  }
+  out.sort(function (a, b) { return a.cost - b.cost; });
+  return out;
+}
+
+/* =========================================================
+   5. 成就
+   ========================================================= */
+function checkAch() {
+  var got = false;
+  for (var i = 0; i < ACHS.length; i++) {
+    var a = ACHS[i];
+    if (state.achs[a.id]) continue;
+    var ok = false;
+    try { ok = !!a.chk(state, derived); } catch (e) { ok = false; }
+    if (ok) {
+      state.achs[a.id] = 1;
+      got = true;
+      toast('★ 成就解锁：<b>' + a.name + '</b> · ' + a.desc + '（全局 +1%）', 3200);
+    }
+  }
+  if (got) recompute();
+}
+
+/* =========================================================
+   6. 转生
+   ========================================================= */
+var PRESTIGE_BASE = 1e9;
+function starGain() {
+  var amt = state.runEarned / PRESTIGE_BASE;
+  if (amt < 1) return 0;
+  var v = Math.pow(amt, 0.4);
+  if (!isFinite(v)) return 0;
+  return Math.floor(v);
+}
+
+function doPrestige() {
+  var gain = starGain();
+  if (gain < 1) return;
+  state.stars += gain;
+  state.totalStars += gain;
+  state.prestiges += 1;
+  state.stardust = 0;
+  state.runEarned = 0;
+  state.gens = new Array(NGEN).fill(0);
+  state.upgrades = {};
+  state.frenzyUntil = 0;
+  UPGRADE_MAP = null;
+  recompute();
+  save();
+  toast('★ 转生完成，获得 <b>' + fmtInt(gain) + '</b> 枚星核（全局 +' + fmt(gain * 2) + '%）', 3600);
+  buildUpgradeCards();
+  buildGenRows();
+}
+
+function buyPup(id) {
+  var p = null;
+  for (var i = 0; i < PUP.length; i++) if (PUP[i].id === id) p = PUP[i];
+  if (!p) return;
+  var lv = pk(id);
+  if (lv >= p.max) return;
+  var cost = p.cost(lv);
+  if (state.stars < cost) return;
+  state.stars -= cost;
+  state.pk[id] = lv + 1;
+  recompute();
+  save();
+  toast('星核商店：<b>' + p.name + '</b> 提升到 Lv.' + (lv + 1));
+}
+
+/* =========================================================
+   7. DOM 构建
+   ========================================================= */
+var genRows = [];
+var upgCards = {};
+var achCards = {};
+
+function buildGenRows() {
+  var list = $('#genList');
+  list.innerHTML = '';
+  genRows = [];
+  for (var i = 0; i < NGEN; i++) {
+    (function (i) {
+      var g = GENS[i];
+      var el = document.createElement('div');
+      el.className = 'gen';
+      el.innerHTML =
+        '<div class="gen-icon">' + g.icon + '</div>' +
+        '<div class="gen-main">' +
+          '<div class="gen-title"><span class="gen-name">' + g.name + '</span>' +
+          '<span class="gen-owned">×<b class="own">0</b></span></div>' +
+          '<div class="gen-desc">' + g.desc + ' · 基础 ' + fmt(g.prod) + '/秒</div>' +
+          '<div class="gen-rate">当前产出 <b class="rate">0</b>/秒</div>' +
+          '<div class="gen-bar"><i></i></div>' +
+        '</div>' +
+        '<div class="gen-buy"><button class="buy-btn"><span class="bl">购买</span><span class="bc">-</span></button></div>';
+      var btn = el.querySelector('.buy-btn');
+      btn.addEventListener('click', function (ev) {
+        ev.preventDefault();
+        var bought = buyGen(i);
+        if (bought) {
+          var r = btn.getBoundingClientRect();
+          floatText(r.left + r.width / 2, r.top, '+' + bought + ' ' + g.name, false);
+        }
+      });
+      list.appendChild(el);
+      genRows.push({
+        root: el,
+        own: el.querySelector('.own'),
+        rate: el.querySelector('.rate'),
+        bar: el.querySelector('.gen-bar i'),
+        btn: btn,
+        bl: el.querySelector('.bl'),
+        bc: el.querySelector('.bc')
+      });
+    })(i);
+  }
+}
+
+function buildUpgradeCards() {
+  var list = $('#upgList');
+  list.innerHTML = '';
+  upgCards = {};
+  var all = allUpgrades();
+  for (var i = 0; i < all.length; i++) {
+    (function (u) {
+      var el = document.createElement('button');
+      el.className = 'upg hidden';
+      el.type = 'button';
+      el.innerHTML = '<span class="un">' + u.name + '</span><span class="ud">' + u.desc + '</span><span class="uc"></span>';
+      el.addEventListener('click', function () {
+        if (buyUpgrade(u.id)) {
+          toast('已购买升级：<b>' + u.name + '</b>');
+          renderSlow();
+        } else {
+          toast('星尘不足');
+        }
+      });
+      list.appendChild(el);
+      upgCards[u.id] = { root: el, cost: el.querySelector('.uc') };
+    })(all[i]);
+  }
+}
+
+function buildAchCards() {
+  var list = $('#achList');
+  list.innerHTML = '';
+  achCards = {};
+  for (var i = 0; i < ACHS.length; i++) {
+    (function (a) {
+      var el = document.createElement('div');
+      el.className = 'ach';
+      el.innerHTML = '<div class="an">' + a.name + '</div><div class="ad">' + a.desc + '</div>';
+      list.appendChild(el);
+      achCards[a.id] = el;
+    })(ACHS[i]);
+  }
+}
+
+function buildPupList() {
+  var list = $('#pupList');
+  if (!list) return;
+  list.innerHTML = '';
+  for (var i = 0; i < PUP.length; i++) {
+    (function (p) {
+      var el = document.createElement('div');
+      el.className = 'pup';
+      el.innerHTML =
+        '<div><div class="pn">' + p.name + '<span class="pl"></span></div><div class="pd"></div></div>' +
+        '<button class="pb"></button>';
+      var btn = el.querySelector('.pb');
+      btn.addEventListener('click', function () { buyPup(p.id); renderSlow(); });
+      list.appendChild(el);
+      p.__el = el;
+      p.__pl = el.querySelector('.pl');
+      p.__pd = el.querySelector('.pd');
+      p.__pb = btn;
+    })(PUP[i]);
+  }
+}
+
+function buildStats() {
+  var box = $('#statList');
+  var keys = [
+    ['playTime', '游戏时长'],
+    ['clicks', '点击次数'],
+    ['runEarned', '本轮收入'],
+    ['totalEarned', '累计收入'],
+    ['sps', '每秒产量'],
+    ['stars', '持有星核'],
+    ['totalStars', '累计星核'],
+    ['prestiges', '转生次数'],
+    ['meteors', '捕获流星'],
+    ['upg', '已购升级'],
+    ['ach', '已解锁成就']
+  ];
+  box.innerHTML = '';
+  var map = {};
+  for (var i = 0; i < keys.length; i++) {
+    var d = document.createElement('div');
+    var s = document.createElement('span');
+    s.textContent = keys[i][1];
+    var b = document.createElement('b');
+    b.textContent = '0';
+    d.appendChild(s); d.appendChild(b);
+    box.appendChild(d);
+    map[keys[i][0]] = b;
+  }
+  return map;
+}
+var statEls = null;
+
+/* =========================================================
+   8. 渲染
+   ========================================================= */
+var slowTimer = 0;
+
+function renderFast() {
+  $('#stardust').textContent = fmt(state.stardust);
+  $('#spsTop').textContent = fmt(derived.sps);
+  $('#starsTop').textContent = fmtInt(state.stars);
+  $('#clickValue').textContent = '+' + fmt(derived.clickValue);
+  $('#clickValue2').textContent = fmt(derived.clickValue);
+  $('#sps').textContent = fmt(derived.sps);
+  $('#runEarned').textContent = fmt(state.runEarned);
+  $('#totalEarned').textContent = fmt(state.totalEarned);
+  document.title = fmt(state.stardust) + ' 星尘 · 星尘熔炉';
+
+  var now = Date.now();
+  var fren = now < state.frenzyUntil;
+  var fe = $('#frenzy');
+  if (fren) {
+    fe.classList.remove('hidden');
+    $('#frenzyTime').textContent = ((state.frenzyUntil - now) / 1000).toFixed(1);
+  } else if (!fe.classList.contains('hidden')) {
+    fe.classList.add('hidden');
+  }
+
+  for (var i = 0; i < NGEN; i++) {
+    var row = genRows[i];
+    var g = GENS[i];
+    var show = i === 0 || state.gens[i] > 0 || state.totalEarned >= g.base * 0.3;
+    if (show) row.root.classList.remove('locked');
+    else row.root.classList.add('locked');
+    if (!show) continue;
+
+    var plan = planBuy(i);
+    row.own.textContent = fmtInt(state.gens[i]);
+    var contrib = state.gens[i] * g.prod * derived.genMult[i] * derived.globalMult * frenzyMult();
+    row.rate.textContent = fmt(contrib);
+    row.bl.textContent = '购买 ×' + (plan.k > 0 ? plan.k : 1);
+    row.bc.textContent = fmt(plan.cost) + ' ✦';
+    var can = plan.k > 0;
+    row.btn.disabled = !can;
+    var ratio = clamp(state.stardust / (plan.cost || 1), 0, 1);
+    row.bar.style.width = (ratio * 100).toFixed(1) + '%';
+    if (can) row.root.classList.add('ready'); else row.root.classList.remove('ready');
+  }
+}
+
+function renderSlow() {
+  /* 升级卡 */
+  var vis = visibleUpgrades();
+  var total = allUpgrades().length;
+  var owned = Object.keys(state.upgrades).length;
+  var seen = {};
+  for (var i = 0; i < vis.length; i++) {
+    var u = vis[i];
+    seen[u.id] = 1;
+    var card = upgCards[u.id];
+    if (!card) continue;
+    card.root.classList.remove('hidden');
+    card.cost.textContent = fmt(u.cost) + ' ✦';
+    if (state.stardust >= u.cost) {
+      card.root.classList.add('ok');
+      card.root.classList.remove('no');
+    } else {
+      card.root.classList.remove('ok');
+      card.root.classList.add('no');
+    }
+  }
+  for (var id in upgCards) {
+    if (!seen[id]) upgCards[id].root.classList.add('hidden');
+  }
+  $('#upgEmpty').classList.toggle('hidden', vis.length > 0);
+  $('#upgCount').textContent = '已购 ' + owned + ' / ' + total;
+
+  /* 转生 */
+  var gain = starGain();
+  $('#pGain').textContent = fmtInt(gain);
+  var pb = $('#prestigeBtn');
+  if (gain >= 1) {
+    pb.disabled = false;
+    pb.textContent = '转生 · 立即获得 ' + fmtInt(gain) + ' 星核';
+  } else {
+    pb.disabled = true;
+    var need = PRESTIGE_BASE - state.runEarned;
+    pb.textContent = '还需本轮收入 ' + fmt(Math.max(0, need)) + ' 才能转生';
+  }
+  for (var p = 0; p < PUP.length; p++) {
+    var pp = PUP[p];
+    var lv = pk(pp.id);
+    var maxed = lv >= pp.max;
+    pp.__pl.textContent = 'Lv.' + lv + ' / ' + pp.max;
+    pp.__pd.textContent = pp.desc(lv);
+    pp.__el.classList.toggle('maxed', maxed);
+    if (maxed) {
+      pp.__pb.textContent = '已满级';
+      pp.__pb.disabled = true;
+    } else {
+      var cost = pp.cost(lv);
+      pp.__pb.textContent = '★ ' + fmtInt(cost);
+      pp.__pb.disabled = state.stars < cost;
+    }
+  }
+
+  /* 成就 */
+  var got = 0;
+  for (var a = 0; a < ACHS.length; a++) {
+    var ac = ACHS[a];
+    var isGot = !!state.achs[ac.id];
+    if (isGot) got++;
+    achCards[ac.id].classList.toggle('got', isGot);
+  }
+  $('#achCount').textContent = got + ' / ' + ACHS.length;
+
+  /* 统计 */
+  if (statEls) {
+    statEls.playTime.textContent = timeStr(state.playTime);
+    statEls.clicks.textContent = fmtInt(state.clicks);
+    statEls.runEarned.textContent = fmt(state.runEarned);
+    statEls.totalEarned.textContent = fmt(state.totalEarned);
+    statEls.sps.textContent = fmt(derived.sps) + ' / 秒';
+    statEls.stars.textContent = fmtInt(state.stars);
+    statEls.totalStars.textContent = fmtInt(state.totalStars);
+    statEls.prestiges.textContent = fmtInt(state.prestiges);
+    statEls.meteors.textContent = fmtInt(state.meteors);
+    statEls.upg.textContent = owned + ' / ' + total;
+    statEls.ach.textContent = got + ' / ' + ACHS.length;
+  }
+
+  /* 设置开关 */
+  var swAuto = $('#swAuto');
+  var autoUnlocked = pk('p_auto') > 0;
+  swAuto.classList.toggle('dis', !autoUnlocked);
+  swAuto.classList.toggle('on', !!state.autoBuy && autoUnlocked);
+  $('#swSci').classList.toggle('on', !!state.sci);
+}
+
+/* =========================================================
+   9. 主循环
+   ========================================================= */
+var autoBuyTimer = 0;
+var achTimer = 0;
+var saveTimer = 0;
+var lastReal = Date.now();
+
+function tick(dt) {
+  recompute();
+
+  if (derived.sps > 0) addStardust(derived.sps * dt);
+
+  var hand = pk('p_hand');
+  if (hand > 0) addStardust(derived.clickValue * hand * dt);
+
+  state.playTime += dt;
+
+  achTimer += dt;
+  if (achTimer >= 0.5) { achTimer = 0; checkAch(); }
+
+  if (state.autoBuy && pk('p_auto') > 0) {
+    autoBuyTimer += dt;
+    if (autoBuyTimer >= 0.5) {
+      autoBuyTimer = 0;
+      doAutoBuy();
+    }
+  }
+
+  saveTimer += dt;
+  if (saveTimer >= 10) { saveTimer = 0; save(); }
+}
+
+function doAutoBuy() {
+  var best = -1;
+  var bestCost = Infinity;
+  for (var i = 0; i < NGEN; i++) {
+    var g = GENS[i];
+    var owned = state.gens[i];
+    var unit = g.base * Math.pow(GROWTH, owned);
+    if (unit <= state.stardust && unit < bestCost) { bestCost = unit; best = i; }
+  }
+  if (best >= 0) {
+    state.stardust -= bestCost;
+    state.gens[best] += 1;
+  }
+}
+
+function loop() {
+  var now = Date.now();
+  var dt = (now - lastReal) / 1000;
+  lastReal = now;
+  if (dt < 0) dt = 0;
+  if (dt > 21600) dt = 21600;   /* 最多补 6 小时，防呆 */
+  if (dt > 0) {
+    if (dt > 60) {
+      /* 切走标签页回来：与关闭页面走同一套离线规则，保持一致 */
+      recompute();
+      var used = Math.min(dt, offlineCapSec());
+      var gain = passiveRate() * used * offlineEff();
+      if (gain > 0) addStardust(gain);
+      state.playTime += dt;
+      checkAch();
+      toast('熔炉在你离开期间持续运转，产出 <b>' + fmt(gain) + '</b> 星尘（结算 ' + timeStr(used) + '）', 3200);
+    } else {
+      tick(dt);
+    }
+  }
+  renderFast();
+  slowTimer += dt;
+  if (slowTimer >= 0.2) { slowTimer = 0; renderSlow(); }
+  requestAnimationFrame(loop);
+}
+
+/* =========================================================
+   10. 存档
+   ========================================================= */
+function flashSave() {
+  var el = $('#saveTip');
+  if (!el) return;
+  el.style.opacity = '1';
+  setTimeout(function () { el.style.opacity = '0'; }, 700);
+}
+
+function save() {
+  state.lastSave = Date.now();
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+    storageOK = true;
+    flashSave();
+  } catch (e) {
+    storageOK = false;
+  }
+}
+
+function mergeState(raw) {
+  var base = defaultState();
+  if (!raw || typeof raw !== 'object') return base;
+  for (var k in base) {
+    if (!Object.prototype.hasOwnProperty.call(raw, k)) continue;
+    var v = raw[k];
+    if (k === 'buyMode') {
+      if (v === 'max') base.buyMode = 'max';
+      else {
+        var bm = parseInt(v, 10);
+        base.buyMode = (bm === 10 || bm === 100) ? bm : 1;
+      }
+    } else if (k === 'gens') {
+      if (Array.isArray(v)) {
+        for (var i = 0; i < NGEN; i++) base.gens[i] = Number(v[i]) || 0;
+      }
+    } else if (k === 'upgrades' || k === 'achs' || k === 'pk') {
+      base[k] = (v && typeof v === 'object') ? v : {};
+    } else if (typeof base[k] === 'number') {
+      var n = Number(v);
+      base[k] = isFinite(n) ? n : base[k];
+    } else if (typeof base[k] === 'boolean') {
+      base[k] = !!v;
+    } else {
+      base[k] = v;
+    }
+  }
+  return base;
+}
+
+function loadGame() {
+  var raw = null;
+  try {
+    raw = localStorage.getItem(SAVE_KEY);
+  } catch (e) {
+    storageOK = false;
+  }
+  if (!raw) return false;
+  var data = null;
+  try { data = JSON.parse(raw); } catch (e) { data = null; }
+  if (!data) return false;
+  state = mergeState(data);
+  return true;
+}
+
+var b64chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+function b64encode(str) {
+  var bytes = [];
+  var i;
+  for (i = 0; i < str.length; i++) {
+    var c = str.charCodeAt(i);
+    if (c < 128) bytes.push(c);
+    else if (c < 2048) { bytes.push((c >> 6) | 192, (c & 63) | 128); }
+    else { bytes.push((c >> 12) | 224, ((c >> 6) & 63) | 128, (c & 63) | 128); }
+  }
+  var out = '';
+  for (i = 0; i < bytes.length; i += 3) {
+    var b1 = bytes[i], b2 = bytes[i + 1], b3 = bytes[i + 2];
+    var e1 = b1 >> 2;
+    var e2 = ((b1 & 3) << 4) | ((b2 === undefined ? 0 : b2) >> 4);
+    var e3 = b2 === undefined ? 64 : (((b2 & 15) << 2) | ((b3 === undefined ? 0 : b3) >> 6));
+    var e4 = b3 === undefined ? 64 : (b3 & 63);
+    out += b64chars.charAt(e1) + b64chars.charAt(e2) +
+      (e3 === 64 ? '=' : b64chars.charAt(e3)) +
+      (e4 === 64 ? '=' : b64chars.charAt(e4));
+  }
+  return out;
+}
+
+function b64decode(str) {
+  var clean = str.replace(/[^A-Za-z0-9+/=]/g, '');
+  var bytes = [];
+  for (var i = 0; i < clean.length; i += 4) {
+    if (i + 1 >= clean.length) break;
+    var c1 = b64chars.indexOf(clean.charAt(i));
+    var c2 = b64chars.indexOf(clean.charAt(i + 1));
+    var c3 = b64chars.indexOf(clean.charAt(i + 2));
+    var c4 = b64chars.indexOf(clean.charAt(i + 3));
+    if (c1 < 0 || c2 < 0) break;
+    bytes.push(((c1 << 2) | (c2 >> 4)) & 255);
+    if (c3 >= 0) bytes.push(((c2 << 4) | (c3 >> 2)) & 255);
+    if (c4 >= 0) bytes.push(((c3 << 6) | c4) & 255);
+  }
+  var out = '';
+  var j = 0;
+  while (j < bytes.length) {
+    var b = bytes[j++];
+    if (b < 128) out += String.fromCharCode(b);
+    else if (b >= 192 && b < 224) {
+      out += String.fromCharCode(((b & 31) << 6) | (bytes[j++] & 63));
+    } else if (b >= 224) {
+      out += String.fromCharCode(((b & 15) << 12) | ((bytes[j++] & 63) << 6) | (bytes[j++] & 63));
+    }
+  }
+  return out;
+}
+
+/* =========================================================
+   11. 流星
+   ========================================================= */
+var meteorTimer = null;
+var meteorActive = false;
+
+function scheduleMeteor(delaySec) {
+  if (meteorTimer) clearTimeout(meteorTimer);
+  var lv = pk('p_meteor');
+  var base = delaySec || (55 + Math.random() * 85);
+  var wait = Math.max(12, base / (1 + 0.15 * lv));
+  meteorTimer = setTimeout(spawnMeteor, wait * 1000);
+}
+
+function spawnMeteor() {
+  if (meteorActive) return;
+  if (document.hidden) { scheduleMeteor(20); return; }
+  meteorActive = true;
+
+  var el = document.createElement('button');
+  el.className = 'meteor';
+  el.type = 'button';
+  el.textContent = '☄️';
+  el.title = '点击获得流星狂热！';
+
+  var fromLeft = Math.random() < 0.5;
+  var startY = 90 + Math.random() * (window.innerHeight - 240);
+  var dx = (fromLeft ? 1 : -1) * (window.innerWidth + 140);
+  var dy = (Math.random() * 160 - 80);
+  el.style.top = startY + 'px';
+  el.style.left = (fromLeft ? -70 : window.innerWidth + 14) + 'px';
+  document.body.appendChild(el);
+
+  var dur = Math.max(3200, 6200 - pk('p_meteor') * 200);
+  var anim = null;
+  if (el.animate) {
+    anim = el.animate(
+      [{ transform: 'translate(0,0)' }, { transform: 'translate(' + dx + 'px,' + dy + 'px)' }],
+      { duration: dur, easing: 'linear' }
+    );
+    anim.onfinish = function () { finishMeteor(el); };
+  } else {
+    meteorTimer = setTimeout(function () { finishMeteor(el); }, dur);
+  }
+
+  el.addEventListener('click', function (ev) {
+    ev.preventDefault();
+    if (!el.parentNode) return;
+    var dur2 = 20 + 2 * pk('p_meteor');
+    state.frenzyUntil = Date.now() + dur2 * 1000;
+    state.meteors += 1;
+    recompute();
+    floatText(ev.clientX, ev.clientY, '流星狂热 ×7！', true);
+    toast('☄️ 捕获流星！接下来 <b>' + dur2 + '</b> 秒内产量 ×7', 2600);
+    checkAch();
+    if (anim) { try { anim.cancel(); } catch (e) {} }
+    if (el.parentNode) el.parentNode.removeChild(el);
+    meteorActive = false;
+    scheduleMeteor();
+  });
+}
+
+function finishMeteor(el) {
+  if (el && el.parentNode) el.parentNode.removeChild(el);
+  meteorActive = false;
+  scheduleMeteor();
+}
+
+/* =========================================================
+   12. 交互绑定
+   ========================================================= */
+function doClick(ev) {
+  recompute();
+  var v = derived.clickValue;
+  addStardust(v);
+  state.clicks += 1;
+  var x, y;
+  if (ev && typeof ev.clientX === 'number' && ev.clientX > 0) {
+    x = ev.clientX; y = ev.clientY;
+  } else {
+    var r = $('#clickBtn').getBoundingClientRect();
+    x = r.left + r.width / 2 + (Math.random() * 80 - 40);
+    y = r.top + r.height / 2 + (Math.random() * 40 - 20);
+  }
+  floatText(x, y, '+' + fmt(v));
+}
+
+function bind() {
+  var btn = $('#clickBtn');
+  btn.addEventListener('click', function (ev) {
+    doClick(ev);
+    btn.blur();
+  });
+
+  document.addEventListener('keydown', function (ev) {
+    if (ev.code === 'Space' || ev.key === ' ') {
+      var t = ev.target;
+      var tag = t && t.tagName ? t.tagName.toLowerCase() : '';
+      if (tag === 'textarea' || tag === 'input') return;
+      ev.preventDefault();
+      doClick(null);
+    }
+  });
+
+  /* 购买模式 */
+  var modes = document.querySelectorAll('#buymodes button');
+  for (var i = 0; i < modes.length; i++) {
+    (function (b) {
+      b.addEventListener('click', function () {
+        var raw = b.getAttribute('data-mode');
+        state.buyMode = raw === 'max' ? 'max' : parseInt(raw, 10);
+        for (var j = 0; j < modes.length; j++) modes[j].classList.remove('on');
+        b.classList.add('on');
+        renderFast();
+      });
+    })(modes[i]);
+  }
+
+  /* 标签页 */
+  var tabs = document.querySelectorAll('#tabs button');
+  for (var t = 0; t < tabs.length; t++) {
+    (function (b) {
+      b.addEventListener('click', function () {
+        var name = b.getAttribute('data-tab');
+        for (var j = 0; j < tabs.length; j++) tabs[j].classList.remove('on');
+        b.classList.add('on');
+        var panes = document.querySelectorAll('.pane');
+        for (var k = 0; k < panes.length; k++) panes[k].classList.remove('on');
+        var pane = $('#pane-' + name);
+        if (pane) pane.classList.add('on');
+        renderSlow();
+      });
+    })(tabs[t]);
+  }
+
+  /* 转生 */
+  $('#prestigeBtn').addEventListener('click', function () {
+    var gain = starGain();
+    if (gain < 1) return;
+    openModal('确认转生', '你将失去当前的 <b>' + fmt(state.stardust) + '</b> 星尘、所有生产线与普通升级，' +
+      '并获得 <b>' + fmtInt(gain) + '</b> 枚星核（全局产量 +' + fmt(gain * 2) + '%）。<br><br>确定要继续吗？',
+      [
+        { label: '取消', cls: 'btn ghost', fn: null },
+        { label: '转生', cls: 'btn gold', fn: function () { doPrestige(); renderSlow(); } }
+      ]);
+  });
+
+  /* 设置 */
+  $('#swAuto').addEventListener('click', function () {
+    if (pk('p_auto') <= 0) { toast('需要先在星核商店解锁「自动机」'); return; }
+    state.autoBuy = !state.autoBuy;
+    renderSlow();
+    toast(state.autoBuy ? '自动购买已开启' : '自动购买已关闭');
+  });
+
+  $('#swSci').addEventListener('click', function () {
+    state.sci = !state.sci;
+    USE_SCI = !!state.sci;
+    renderSlow();
+  });
+
+  $('#btnSave').addEventListener('click', function () {
+    save();
+    toast(storageOK ? '已保存到本地' : '保存失败：浏览器禁用了本地存储，请使用导出存档备份');
+  });
+
+  $('#btnExport').addEventListener('click', function () {
+    save();
+    var txt = b64encode(JSON.stringify(state));
+    $('#ioBox').value = txt;
+    $('#ioBox').select();
+    toast('存档已生成，可复制保存（长度 ' + txt.length + '）');
+  });
+
+  $('#btnImport').addEventListener('click', function () {
+    var txt = ($('#ioBox').value || '').trim();
+    if (!txt) { toast('请先粘贴存档文本'); return; }
+    var obj = null;
+    try {
+      obj = JSON.parse(txt);
+    } catch (e) {
+      try { obj = JSON.parse(b64decode(txt)); } catch (e2) { obj = null; }
+    }
+    if (!obj || typeof obj !== 'object') { toast('存档格式无法识别'); return; }
+    openModal('确认导入', '导入存档会<b>完全覆盖</b>当前进度，确定吗？', [
+      { label: '取消', cls: 'btn ghost', fn: null },
+      {
+        label: '导入', cls: 'btn gold', fn: function () {
+          state = mergeState(obj);
+          USE_SCI = !!state.sci;
+          UPGRADE_MAP = null;
+          recompute();
+          buildGenRows();
+          buildUpgradeCards();
+          renderSlow();
+          save();
+          toast('存档导入成功');
+        }
+      }
+    ]);
+  });
+
+  $('#btnWipe').addEventListener('click', function () {
+    openModal('清除全部进度', '这会删除所有星尘、星核、成就与升级，且<b>无法恢复</b>。<br><br>真的要重新开始吗？', [
+      { label: '取消', cls: 'btn ghost', fn: null },
+      {
+        label: '全部删除', cls: 'btn danger', fn: function () {
+          try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
+          state = defaultState();
+          USE_SCI = false;
+          UPGRADE_MAP = null;
+          recompute();
+          buildGenRows();
+          buildUpgradeCards();
+          renderSlow();
+          toast('已重置，欢迎重新开始');
+        }
+      }
+    ]);
+  });
+
+  /* 页面隐藏 / 关闭时保存 */
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) save();
+    else lastReal = Date.now();
+  });
+  window.addEventListener('beforeunload', function () { save(); });
+}
+
+/* =========================================================
+   13. 启动
+   ========================================================= */
+function offlineReport(seconds) {
+  var cap = offlineCapSec();
+  var used = Math.min(seconds, cap);
+  var eff = offlineEff();
+  recompute();
+  var gain = passiveRate() * used * eff;
+  if (gain > 0) addStardust(gain);
+  var body =
+    '你离开了 <b>' + timeStr(seconds) + '</b>。<br>' +
+    '离线结算上限 ' + (cap / 3600) + ' 小时，效率 ' + Math.round(eff * 100) + '%。<br>' +
+    '实际结算 ' + timeStr(used) + '，熔炉为你产出：<br>' +
+    '<div style="margin-top:10px;font-size:20px;font-weight:800;color:#ffcb6b">+' + fmt(gain) + ' 星尘</div>';
+  if (gain <= 0) {
+    body += '<div class="muted" style="margin-top:8px">（当前没有生产线在运转，下次记得先造几台机器）</div>';
+  }
+  openModal('离线收益', body, [{ label: '收下', cls: 'btn gold', fn: null }]);
+}
+
+function init() {
+  var loaded = loadGame();
+  USE_SCI = !!state.sci;
+
+  if (state.buyMode !== 'max') state.buyMode = parseInt(state.buyMode, 10) || 1;
+  var modeBtns = document.querySelectorAll('#buymodes button');
+  for (var i = 0; i < modeBtns.length; i++) {
+    var raw = modeBtns[i].getAttribute('data-mode');
+    var val = raw === 'max' ? 'max' : parseInt(raw, 10);
+    modeBtns[i].classList.toggle('on', String(val) === String(state.buyMode));
+  }
+
+  allUpgrades();
+  buildGenRows();
+  buildUpgradeCards();
+  buildAchCards();
+  buildPupList();
+  statEls = buildStats();
+  bind();
+
+  recompute();
+
+  if (loaded) {
+    var elapsed = (Date.now() - state.lastSave) / 1000;
+    state.lastTick = Date.now();
+    if (elapsed > 60) offlineReport(elapsed);
+  }
+
+  if (!storageOK) {
+    var w = $('#storageWarn');
+    w.classList.remove('hidden');
+    w.textContent = '注意：浏览器阻止了本地存储，进度无法自动保存。请在「设置」里手动导出存档备份。';
+  }
+
+  lastReal = Date.now();
+  renderFast();
+  renderSlow();
+  requestAnimationFrame(loop);
+  scheduleMeteor(35 + Math.random() * 30);
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+
+})();
+</script>
+</body>
+</html>
